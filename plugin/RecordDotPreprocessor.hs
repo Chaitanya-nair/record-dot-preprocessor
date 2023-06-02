@@ -159,7 +159,7 @@ getFields modName DataDecl{tcdDataDefn=HsDataDefn{..}, ..} = concatMap ctor dd_c
         defVars vars = [v | L _ v <- hsLTyVarLocNames vars]
 
         -- A value of this data declaration will have this type.
-        result = foldl (\x y -> noL $ HsAppTy noE (reLocA x) $ hsLTyVarBndrToType y) (noL $ HsTyVar noAnn GHC.NotPromoted tyName) $ hsq_explicit tcdTyVars
+        result = foldl (\x y -> noL $ HsAppTy noE (reLocA x) $ noL $ HsParTy noE $ hsLTyVarBndrToType y) (noL $ HsTyVar noE GHC.NotPromoted tyName) $ hsq_explicit tcdTyVars
         tyName = case (tcdLName, modName) of
             (L l (GHC.Unqual name), Just modName') -> L l (GHC.Qual modName' name)
             _ -> tcdLName
@@ -231,8 +231,8 @@ onExp (L o upd@RecordUpd{rupd_expr,rupd_flds= fld:flds})
                                 , hsRecFieldArg = arg
                                 , hsRecPun = pun } ) : flds)
             | let sel = mkSelector lbl
-            , let arg2 = if pun then noLA $ HsVar noE (reLocA lbl) else arg
-            , let expr2 = mkParen $ mkVar var_setField `mkAppType` sel `mkApp` expr `mkApp` arg2  -- 'expr' never needs bracketing.
+            , let arg2 = if pun then noL $ HsVar noE (reLocA lbl) else arg
+            , let expr2 = mkParen $ mkVar var_setField `mkAppType` sel `mkApp` expr `mkApp` (mkParen arg2)
             = f expr2 flds
 
 onExp x = descend onExp x
